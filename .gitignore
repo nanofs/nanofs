@@ -13,5 +13,6 @@
 
 # special file type
 *.app
+*.sh
 
 .idea

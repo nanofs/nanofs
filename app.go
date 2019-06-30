@@ -6,6 +6,12 @@ import (
 )
 
 func main() {
+	conf, err := readConfig()
+	if err != nil {
+		writeConfig()
+		return
+	}
+
 	handlerFunc("/list/", "/list", list)
 	handlerFile("/download/", "/download", "./")
 	http.HandleFunc("/put/file/", uploadFile)
@@ -17,7 +23,7 @@ func main() {
 	handlerFunc("/mkdir/", "/mkdir", mkdir)
 	handlerFile("/", "", "./")
 	log.Printf("server running")
-	err := http.ListenAndServe(":8090", nil)
+	err = http.ListenAndServe(conf.Port, nil)
 	if err != nil {
 		log.Printf("error when create server")
 	}
