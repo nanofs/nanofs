@@ -93,6 +93,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := r.ParseMultipartForm(1024000)
+	log.Printf("upload: ParseMultipartForm")
 	if err != nil {
 		http.Error(w, "404", http.StatusNotFound)
 		log.Printf("upload: %s", err.Error())
@@ -100,6 +101,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	files := r.MultipartForm.File["files"]
+	log.Printf("upload: files " + string(len(files)))
 	log.Printf("upload: %s", string(len(files)))
 	if len(files) > 0 {
 		log.Printf("upload: %s", files[0].Filename)
@@ -130,10 +132,12 @@ func _saveFile(w http.ResponseWriter, fileHeader *multipart.FileHeader, path str
 		return err
 	}
 	dst, err := os.Create("." + path + "/" + fileHeader.Filename)
+	log.Printf("upload: os.Create")
 	defer dst.Close()
 	if err != nil {
 		return err
 	}
+	log.Printf("upload: os.Copy")
 	if _, err := io.Copy(dst, file); err != nil {
 		return err
 	}
