@@ -3,7 +3,6 @@ package main
 import (
 	"io"
 	"log"
-	"mime/multipart"
 	"net/http"
 	"os"
 )
@@ -88,58 +87,31 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	if !check(path) {
 		http.Error(w, "404", http.StatusNotFound)
-		log.Printf("upload: path invalid")
+		log.Printf("upload %s: path invalid", path)
 		return
 	}
 
-	err := r.ParseMultipartForm(1024000)
-	log.Printf("upload: ParseMultipartForm")
+	file, _, err := r.FormFile("files")
 	if err != nil {
 		http.Error(w, "404", http.StatusNotFound)
-		log.Printf("upload: %s", err.Error())
+		log.Printf("upload form file %s error: path invalid", path)
 		return
 	}
-
-	files := r.MultipartForm.File["files"]
-	log.Printf("upload: files " + string(len(files)))
-	log.Printf("upload: %s", string(len(files)))
-	if len(files) > 0 {
-		log.Printf("upload: %s", files[0].Filename)
-	}
-	result := true
-	fileNames := ""
-	for i, _ := range files {
-		file := files[i]
-		fileNames += " " + file.Filename
-		err = _saveFile(w, file, path)
-		if err != nil {
-			result = false
-			http.Error(w, "404", http.StatusNotFound)
-			log.Printf("upload: %s", err.Error())
-			break
-		}
-	}
-	if result {
-		_, _ = w.Write([]byte("success"))
-		log.Printf("upload: success," + fileNames)
-	}
-}
-
-func _saveFile(w http.ResponseWriter, fileHeader *multipart.FileHeader, path string) error {
-	file, err := fileHeader.Open()
 	defer file.Close()
+
+	fW, err := os.Create("." + path)
 	if err != nil {
-		return err
+		http.Error(w, "500", http.StatusInternalServerError)
+		log.Printf("upload %s: %s", path, err.Error())
+		return
 	}
-	dst, err := os.Create("." + path + "/" + fileHeader.Filename)
-	log.Printf("upload: os.Create")
-	defer dst.Close()
+	defer fW.Close()
+	_, err = io.Copy(fW, file)
 	if err != nil {
-		return err
+		http.Error(w, "500", http.StatusInternalServerError)
+		log.Printf("upload %s: %s", path, err.Error())
+		return
 	}
-	log.Printf("upload: os.Copy")
-	if _, err := io.Copy(dst, file); err != nil {
-		return err
-	}
-	return nil
+	_, _ = w.Write([]byte("success"))
+	log.Printf("upload %s success", path)
 }

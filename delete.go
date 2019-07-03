@@ -18,8 +18,8 @@ func deleteFile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "500", http.StatusInternalServerError)
 		log.Printf("delete %s: %s", path, err.Error())
-	} else {
-		_, _ = w.Write([]byte("success"))
-		log.Printf("delete %s success", path)
+		return
 	}
+	_, _ = w.Write([]byte("success"))
+	log.Printf("delete %s success", path)
 }
